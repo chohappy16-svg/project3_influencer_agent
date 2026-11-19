@@ -1,0 +1,27 @@
+:root {
+  --bg-main: #0f172a;
+  --card-bg: #1e293b;
+  --sub-bg: #0f172a;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: rgba(148, 163, 184, 0.22);
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --green: #10b981;
+  --amber: #f59e0b;
+  --danger: #f43f5e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+

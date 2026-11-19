@@ -1,0 +1,19 @@
+# InfluenceOps v3.0 — AI Agent & Crawler & Streamlit Prototype Dependencies
+streamlit>=1.38.0
+openai>=1.50.0
+pydantic>=2.9.0
+python-dotenv>=1.0.1
+requests>=2.32.0
+Pillow>=10.4.0
+instaloader>=4.13.0
+fastapi>=0.115.0
+uvicorn>=0.30.0
+sqlalchemy>=2.0.35
+pymysql>=1.1.1
+
+# Reference / NLP Practice Dependencies
+transformers<5.0.0
+torch
+accelerate
+sentencepiece
+sacremoses

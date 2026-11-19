@@ -1,0 +1,15 @@
+import requests, re, json
+r = requests.get("https://www.instagram.com/mew_demure/embed/", headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
+ctx_m = re.search(r'"contextJSON"\s*:\s*"((?:\\.|[^"\\])*)"', r.text)
+pj = json.loads(json.loads(f'"{ctx_m.group(1)}"'))
+ctx = pj.get("context", {})
+media = ctx.get("graphql_media", [])
+print("CONTEXT KEYS:", list(ctx.keys()))
+if media:
+    sm = media[0].get("shortcode_media", media[0])
+    print("MEDIA[0] KEYS:", list(sm.keys()))
+    print("display_url:", str(sm.get("display_url", ""))[:80])
+    print("thumbnail_src:", str(sm.get("thumbnail_src", ""))[:80])
+    cap_edges = (sm.get("edge_media_to_caption") or {}).get("edges", [])
+    print("caption:", cap_edges[0]["node"]["text"][:80] if cap_edges else None)
+    print("likes:", (sm.get("edge_liked_by") or sm.get("edge_media_preview_like") or {}).get("count"))
