@@ -2,6 +2,12 @@
 > **브랜드 핏과 콘텐츠 결을 지키는 인플루언서 협찬 의사결정 지원 SaaS**  
 > *"수작업으로 대조하던 수십 시간의 탐색과 비효율을 줄이고, 브랜드 DNA와 제품 비주얼에 부합하는 인플루언서를 정밀 진단·비교·선정합니다."*
 
+[![InfluenceOps CI](https://github.com/chohappy16-svg/project3_influencer_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/chohappy16-svg/project3_influencer_agent/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/badge/Docker-29.7.2-blue?logo=docker)](https://www.docker.com/)
+[![AWS EC2](https://img.shields.io/badge/AWS-EC2%20Deployed-orange?logo=amazon-aws)](http://16.178.177.137:5173/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev/)
+
 ---
 
 ## 🚀 비즈니스 임팩트 (Key Results)
