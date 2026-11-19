@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # 1. PostgreSQL 데이터베이스 서비스 (공식 최신 LTS 이미지)
   db:

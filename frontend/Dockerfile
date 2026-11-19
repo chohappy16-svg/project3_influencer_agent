@@ -1,5 +1,5 @@
-# 1단계: 빌드 환경 (Node.js 18)
-FROM node:18-alpine AS build
+# 1단계: 빌드 환경 (Node.js 20 LTS - Vite 8 / Rolldown 호환)
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
