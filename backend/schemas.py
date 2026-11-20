@@ -6,9 +6,10 @@ Pydantic v2 입출력 스키마 및 환각(Hallucination) 통제 AI Structured O
 ==============================================================================
 """
 
+import re
 from datetime import datetime
 from typing import List, Literal, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # ==============================================================================
@@ -52,9 +53,18 @@ class InfluencerAIOutputSchema(BaseModel):
 # ==============================================================================
 class UserSignupRequest(BaseModel):
     email: EmailStr = Field(..., examples=["marketer@influenceops.ai"])
-    password: str = Field(..., min_length=4, examples=["password1234"])
+    password: str = Field(..., min_length=8, max_length=32, examples=["password1234!"])
     company_name: Optional[str] = Field(default="클린뷰티 랩", examples=["클린뷰티 랩"])
     brand_url: str = Field(..., examples=["https://www.innisfree.com"])
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        if len(v) < 8 or len(v) > 32:
+            raise ValueError("비밀번호는 8자 이상 32자 이하로 입력해 주세요.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+=\[\]\\/~`']", v):
+            raise ValueError("비밀번호에는 특수문자(!@# 등)가 최소 1개 이상 포함되어야 합니다.")
+        return v
 
 
 class UserSignupResponse(BaseModel):
