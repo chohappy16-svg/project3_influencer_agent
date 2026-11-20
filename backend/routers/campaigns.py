@@ -688,6 +688,39 @@ def update_candidate_decision(
     )
 
 
+@results_router.delete("/{result_id}")
+def delete_candidate_result(
+    result_id: int,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """분석 결과 목록에서 특정 인플루언서 후보 1명을 삭제합니다."""
+    row = (
+        db.query(models.InfluencerResult)
+        .join(models.Campaign, models.InfluencerResult.campaign_id == models.Campaign.id)
+        .filter(
+            models.InfluencerResult.id == result_id,
+            models.Campaign.user_id == current_user.id,
+        )
+        .first()
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="해당 후보자 결과를 찾을 수 없거나 삭제 권한이 없습니다.")
+
+    camp = db.query(models.Campaign).filter(models.Campaign.id == row.campaign_id).first()
+    ig_id = row.instagram_id
+    camp_id = row.campaign_id
+    db.delete(row)
+    if camp and camp.total_candidates and camp.total_candidates > 0:
+        camp.total_candidates -= 1
+    db.commit()
+    return {
+        "message": f"@{ig_id} 후보자가 목록에서 삭제되었습니다.",
+        "deleted_id": result_id,
+        "campaign_id": camp_id,
+    }
+
+
 @router.get("/{campaign_id}/export")
 def export_approved_candidates_xlsx(
     campaign_id: int,
