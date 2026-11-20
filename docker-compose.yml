@@ -9,7 +9,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-influenceops}
     ports:
-      - "5432:5432"
+      # 호스트 로컬 루프백에만 바인딩하여 외부 인터넷(0.0.0.0/0) 직접 노출 원천 차단
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

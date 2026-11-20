@@ -62,14 +62,16 @@ app.include_router(auth.router)
 app.include_router(campaigns.router)
 app.include_router(campaigns.results_router)
 
-# 2. React(Vite) 프론트엔드 연동을 위한 CORS 허용
+# 2. React(Vite) 프론트엔드 연동을 위한 CORS 허용 (로컬 개발 및 EC2 공인 IP 원활한 접속 지원)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "http://16.178.177.137:5173",
     ],
+    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

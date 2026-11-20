@@ -13,7 +13,12 @@
 
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://127.0.0.1:8001';
+// 브라우저 접속 호스트(localhost, EC2 공인 IP 등)에 맞춰 동적으로 백엔드 포트(8001)에 연결
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && window.location.hostname
+    ? `${window.location.protocol}//${window.location.hostname}:8001`
+    : 'http://127.0.0.1:8001');
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
