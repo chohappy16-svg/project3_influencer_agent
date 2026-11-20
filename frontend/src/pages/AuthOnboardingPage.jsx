@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Sparkles, ArrowRight, Globe, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, Sparkles, ArrowRight, Globe, AlertCircle, Loader2, X } from 'lucide-react';
 import { BrandLogo } from '../components/BrandLogo';
 import { authApi } from '../api/client';
 
@@ -19,8 +19,9 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
 
-  // 중복 가입 경고 모달 상태
+  // 중복 가입 경고 모달 상태 및 이용약관/개인정보 처리방침 모달 상태
   const [duplicateEmailModal, setDuplicateEmailModal] = useState('');
+  const [termsModalTab, setTermsModalTab] = useState(''); // '' | 'terms' | 'privacy'
 
   // 실시간 유효성 검증 (회원가입용)
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.trim());
@@ -345,15 +346,47 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                   </p>
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={agreeTerms}
-                    onChange={(e) => setAgreeTerms(e.target.checked)}
-                    className="rounded border-slate-300 text-brand-navy"
-                  />
-                  이용약관 및 개인정보 처리방침에 동의합니다.
-                </label>
+                <div className="flex items-center justify-between gap-2 text-xs text-slate-600">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={agreeTerms}
+                      onChange={(e) => setAgreeTerms(e.target.checked)}
+                      className="rounded border-slate-300 text-brand-navy"
+                    />
+                    <span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTermsModalTab('terms');
+                        }}
+                        className="underline hover:text-brand-navy font-semibold"
+                      >
+                        이용약관
+                      </button>{' '}
+                      및{' '}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTermsModalTab('privacy');
+                        }}
+                        className="underline hover:text-brand-navy font-semibold"
+                      >
+                        개인정보 처리방침
+                      </button>
+                      에 동의합니다.
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalTab('terms')}
+                    className="text-[11px] text-slate-400 hover:text-brand-sky underline shrink-0"
+                  >
+                    내용 보기
+                  </button>
+                </div>
 
                 <button
                   type="submit"
@@ -521,11 +554,118 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
       <footer className="w-full px-8 py-5 flex items-center justify-between text-xs text-slate-400">
         <span>© 2026 InfluenceOps</span>
         <div className="flex items-center gap-4">
-          <span>이용약관</span>
-          <span>개인정보 처리방침</span>
+          <button type="button" onClick={() => setTermsModalTab('terms')} className="hover:text-slate-600">
+            이용약관
+          </button>
+          <button type="button" onClick={() => setTermsModalTab('privacy')} className="hover:text-slate-600">
+            개인정보 처리방침
+          </button>
           <span>문의하기</span>
         </div>
       </footer>
+
+      {/* 이용약관 및 개인정보 처리방침 모달 */}
+      {termsModalTab && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTermsModalTab('terms')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    termsModalTab === 'terms'
+                      ? 'bg-brand-navy text-white'
+                      : 'text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  서비스 이용약관
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTermsModalTab('privacy')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                    termsModalTab === 'privacy'
+                      ? 'bg-brand-navy text-white'
+                      : 'text-slate-500 hover:bg-slate-100'
+                  }`}
+                >
+                  개인정보 처리방침
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTermsModalTab('')}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto text-xs text-slate-600 leading-relaxed space-y-4">
+              {termsModalTab === 'terms' ? (
+                <>
+                  <h4 className="text-sm font-bold text-brand-navy">InfluenceOps 서비스 이용약관</h4>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">제1조 (목적)</p>
+                    <p>본 약관은 InfluenceOps(이하 &ldquo;회사&rdquo;)가 제공하는 B2B 인플루언서 섭외 의사결정 지원 AI SaaS 서비스의 이용 조건 및 절차에 관한 사항을 규정합니다.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">제2조 (서비스 내용 및 AI 분석 기준)</p>
+                    <p>회사는 회원이 입력한 브랜드 자사몰 URL 및 캠페인 가이드라인을 바탕으로 공개된 소셜 미디어(SNS) 콘텐츠를 분석하여 브랜드 적합도, 예상 원고료, 추천 여부를 제공합니다. AI 분석 결과는 의사결정 보조 지표이며, 최종 섭외 및 계약 책임은 회원에게 있습니다.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">제3조 (회원의 의무)</p>
+                    <p>회원은 타인의 계정을 도용하거나 허위 정보를 입력해서는 안 되며, 서비스에서 추출한 데이터를 불법 스팸 발송 등 비윤리적 목적으로 사용할 수 없습니다.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">제4조 (이용 해지 및 회원 탈퇴)</p>
+                    <p>회원은 언제든지 [설정 &gt; 회원 탈퇴] 메뉴를 통해 서비스 이용 계약을 해지하고 계정을 삭제할 수 있습니다.</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h4 className="text-sm font-bold text-brand-navy">InfluenceOps 개인정보 처리방침</h4>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">1. 수집하는 개인정보 항목</p>
+                    <p>회사는 회원가입 및 워크스페이스 운영을 위해 최소한의 정보(이메일 주소, 암호화된 비밀번호, 회사/브랜드명, 브랜드 자사몰 URL)를 수집합니다.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">2. 개인정보의 이용 목적 및 암호화 보호</p>
+                    <p>수집된 정보는 회원 식별, 브랜드 DNA 추출, 캠페인 관리 기능 제공에만 사용되며, 비밀번호는 Bcrypt 단방향 해시 암호화를 거쳐 안전하게 보관됩니다.</p>
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-700 mb-1">3. 보유 기간 및 파기 절차</p>
+                    <p>회원의 개인정보 및 캠페인 분석 데이터는 회원 탈퇴 시 즉시 데이터베이스에서 영구 삭제되며 복구할 수 없습니다.</p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setTermsModalTab('')}
+                className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold"
+              >
+                닫기
+              </button>
+              {mode === 'signup' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgreeTerms(true);
+                    setTermsModalTab('');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-brand-sky hover:bg-sky-600 text-white text-xs font-bold"
+                >
+                  확인 및 동의하기
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 이미 가입된 이메일 경고 모달 팝업 */}
       {duplicateEmailModal && (
