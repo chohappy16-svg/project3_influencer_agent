@@ -38,6 +38,7 @@ export const authApi = {
   login: (payload) => apiClient.post('/api/auth/login', payload).then((r) => r.data),
   getMe: () => apiClient.get('/api/auth/me').then((r) => r.data),
   updateBrandDna: (payload) => apiClient.put('/api/auth/brand-dna', payload).then((r) => r.data),
+  deleteAccount: () => apiClient.delete('/api/auth/me').then((r) => r.data),
 };
 
 export const campaignsApi = {

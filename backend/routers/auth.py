@@ -239,3 +239,15 @@ async def update_brand_dna(
         brand_url=latest_dna.brand_url or req.brand_url,
         brand_dna_summary=latest_dna.full_dna_text,
     )
+
+
+@router.delete("/me")
+def delete_my_account(
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """회원 탈퇴: 현재 로그인한 계정과 연관 데이터(브랜드 DNA, 캠페인, 분석 결과)를 영구 삭제합니다."""
+    email = current_user.email
+    db.delete(current_user)
+    db.commit()
+    return {"message": f"계정({email})이 안전하게 탈퇴 처리되었습니다."}

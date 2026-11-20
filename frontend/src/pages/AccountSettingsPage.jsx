@@ -1,7 +1,26 @@
-import React from 'react';
-import { ShieldCheck, Sparkles, Dna, Cpu, CreditCard, LogOut, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, Sparkles, Dna, Cpu, CreditCard, LogOut, ArrowRight, UserX, AlertCircle, Loader2 } from 'lucide-react';
+import { authApi } from '../api/client';
 
 export default function AccountSettingsPage({ user, onGoToDna, onLogout }) {
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState('');
+
+  const handleWithdraw = async () => {
+    setWithdrawing(true);
+    setWithdrawError('');
+    try {
+      await authApi.deleteAccount();
+      setWithdrawModalOpen(false);
+      onLogout();
+    } catch (err) {
+      setWithdrawError(err.response?.data?.detail || '회원 탈퇴 처리 중 오류가 발생했습니다.');
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl space-y-6 pb-12">
       <div>
@@ -73,20 +92,80 @@ export default function AccountSettingsPage({ user, onGoToDna, onLogout }) {
         </button>
       </div>
 
-      {/* 로그아웃 영역 */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 flex items-center justify-between">
-        <div>
-          <div className="text-sm font-bold text-brand-navy">로그아웃</div>
-          <div className="text-xs text-slate-400 mt-0.5">현재 기기에서 안전하게 로그아웃합니다.</div>
+      {/* 로그아웃 및 회원 탈퇴 영역 */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 divide-y divide-slate-100">
+        <div className="p-6 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-bold text-brand-navy">로그아웃</div>
+            <div className="text-xs text-slate-400 mt-0.5">현재 기기에서 안전하게 로그아웃합니다.</div>
+          </div>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold inline-flex items-center gap-1.5 transition"
+          >
+            <LogOut className="w-3.5 h-3.5" /> 로그아웃
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="px-4 py-2.5 rounded-xl border border-red-200 bg-red-50/50 hover:bg-red-100 text-red-600 text-xs font-bold inline-flex items-center gap-1.5 transition"
-        >
-          <LogOut className="w-3.5 h-3.5" /> 로그아웃
-        </button>
+
+        <div className="p-6 flex items-center justify-between">
+          <div>
+            <div className="text-sm font-bold text-rose-600">회원 탈퇴</div>
+            <div className="text-xs text-slate-400 mt-0.5">
+              계정 및 저장된 브랜드 DNA, 모든 캠페인 분석 내역을 영구 삭제합니다.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setWithdrawError('');
+              setWithdrawModalOpen(true);
+            }}
+            className="px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100 text-rose-600 text-xs font-bold inline-flex items-center gap-1.5 transition"
+          >
+            <UserX className="w-3.5 h-3.5" /> 회원 탈퇴
+          </button>
+        </div>
       </div>
+
+      {/* 회원 탈퇴 확인 모달 */}
+      {withdrawModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 p-6">
+            <div className="w-11 h-11 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-4">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-brand-navy">정말 탈퇴하시겠습니까?</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              탈퇴하시면 <span className="font-semibold text-brand-navy">{user?.email}</span> 계정과 저장된 브랜드 DNA, 캠페인 및 인플루언서 분석 데이터가 모두 영구 삭제되며 복구할 수 없습니다.
+            </p>
+            {withdrawError && (
+              <div className="mt-3 p-2.5 rounded-lg bg-rose-50 text-xs text-rose-600 border border-rose-200">
+                {withdrawError}
+              </div>
+            )}
+            <div className="mt-5 flex items-center gap-2">
+              <button
+                type="button"
+                disabled={withdrawing}
+                onClick={() => setWithdrawModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={withdrawing}
+                onClick={handleWithdraw}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-60"
+              >
+                {withdrawing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                탈퇴하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
