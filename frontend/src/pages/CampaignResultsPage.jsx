@@ -29,6 +29,7 @@ import {
   Scale,
   Package,
   Edit3,
+  Trash2,
 } from 'lucide-react';
 import { FitStatusBadge, ApprovalStateBadge } from '../components/StatusBadge';
 import { InfoTooltip } from '../components/InfoTooltip';
@@ -43,6 +44,7 @@ export default function CampaignResultsPage({
   onChangeCompareIds,
   onUploadMore,
   onDecisionUpdated,
+  onResultsDeleted,
   onCompareSelected,
   onOpenDetail,
 }) {
@@ -213,6 +215,37 @@ export default function CampaignResultsPage({
       setSelectedIds([]);
     } catch (err) {
       alert('일괄 처리 중 오류가 발생했습니다.');
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleDeleteSingle = async (e, item) => {
+    e.stopPropagation();
+    if (!window.confirm(`@${item.instagram_id} 후보자를 이 캠페인 목록에서 삭제하시겠습니까?`)) {
+      return;
+    }
+    try {
+      await campaignsApi.deleteResult(item.id);
+      setSelectedIds((prev) => prev.filter((id) => id !== item.id));
+      if (onResultsDeleted) onResultsDeleted([item.id]);
+    } catch {
+      alert('후보 삭제 중 오류가 발생했습니다.');
+    }
+  };
+
+  const handleBulkDelete = async (targetIds) => {
+    if (targetIds.length === 0 || bulkProcessing) return;
+    if (!window.confirm(`선택한 ${targetIds.length}명의 후보자를 이 캠페인 목록에서 삭제하시겠습니까?`)) {
+      return;
+    }
+    setBulkProcessing(true);
+    try {
+      await Promise.all(targetIds.map((id) => campaignsApi.deleteResult(id)));
+      setSelectedIds([]);
+      if (onResultsDeleted) onResultsDeleted(targetIds);
+    } catch {
+      alert('일괄 삭제 중 오류가 발생했습니다.');
     } finally {
       setBulkProcessing(false);
     }
@@ -449,6 +482,7 @@ export default function CampaignResultsPage({
                   <th className="py-3 px-4">핵심 판정 이유</th>
                   <th className="py-3 px-3">AI 판정</th>
                   <th className="py-3 px-4">상태</th>
+                  <th className="py-3 px-3 text-center">삭제</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
@@ -619,6 +653,17 @@ export default function CampaignResultsPage({
                       <td className="py-4 px-4 whitespace-nowrap shrink-0">
                         <ApprovalStateBadge state={r.approval_state} />
                       </td>
+
+                      <td className="py-4 px-3 text-center whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteSingle(e, r)}
+                          title="이 후보 목록에서 삭제"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -679,6 +724,15 @@ export default function CampaignResultsPage({
                   : `${selectedApprovedIds.length}명 일괄 승인 취소`}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => handleBulkDelete(selectedIds)}
+              disabled={bulkProcessing}
+              className="px-3.5 py-2 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold flex items-center gap-1.5 transition disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              선택 삭제
+            </button>
           </div>
         </div>
       )}

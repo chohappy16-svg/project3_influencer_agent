@@ -119,6 +119,13 @@ export default function App() {
     }
   };
 
+  const handleResultsDeleted = (deletedIds) => {
+    const idSet = new Set(deletedIds);
+    setCampaignResults((prev) => prev.filter((r) => !idSet.has(r.id)));
+    setCompareIds((prev) => prev.filter((id) => !idSet.has(id)));
+    fetchCampaigns();
+  };
+
   if (booting) {
     return (
       <div className="min-h-screen bg-brand-bg flex items-center justify-center text-sm text-slate-500">
@@ -224,6 +231,7 @@ export default function App() {
           onChangeCompareIds={setCompareIds}
           onUploadMore={() => setView('upload')}
           onDecisionUpdated={handleDecisionUpdated}
+          onResultsDeleted={handleResultsDeleted}
           onCompareSelected={(ids) => {
             setCompareIds(ids);
             setView('compare');
