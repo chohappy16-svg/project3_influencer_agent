@@ -32,7 +32,7 @@ import { campaignsApi } from '../api/client';
 
 const STATUS_META = {
   READY: {
-    label: '준비/분석',
+    label: '준비',
     badgeClass: 'bg-sky-50 text-brand-sky border-sky-200',
   },
   IN_PROGRESS: {
@@ -44,6 +44,25 @@ const STATUS_META = {
     badgeClass: 'bg-slate-100 text-slate-500 border-slate-200',
   },
 };
+
+function getTodayYMD() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function resolveCampaignStatus(camp) {
+  const today = getTodayYMD();
+  const start = (camp?.start_date || '').trim();
+  const end = (camp?.end_date || '').trim();
+
+  if (start && today < start) return 'READY'; // 시작일 이전(후 일정)
+  if (end && today > end) return 'COMPLETED'; // 종료일 경과
+  if (start || end) return 'IN_PROGRESS'; // 오늘이 일정 기간 내 해당
+  return camp?.status || 'READY'; // 일정 미지정 시 기본 상태
+}
 
 function calcDDayText(endDateStr) {
   if (!endDateStr) return null;
@@ -106,9 +125,9 @@ export default function CampaignDashboardPage({
   const totalCampaigns = safeCampaigns.length;
   const analyzedCampaigns = safeCampaigns.filter((c) => (c.total_candidates || 0) > 0).length;
   const waitingUpload = safeCampaigns.filter((c) => (c.total_candidates || 0) === 0).length;
-  const readyCount = safeCampaigns.filter((c) => (c.status || 'READY') === 'READY').length;
-  const inProgressCount = safeCampaigns.filter((c) => c.status === 'IN_PROGRESS').length;
-  const completedCount = safeCampaigns.filter((c) => c.status === 'COMPLETED').length;
+  const readyCount = safeCampaigns.filter((c) => resolveCampaignStatus(c) === 'READY').length;
+  const inProgressCount = safeCampaigns.filter((c) => resolveCampaignStatus(c) === 'IN_PROGRESS').length;
+  const completedCount = safeCampaigns.filter((c) => resolveCampaignStatus(c) === 'COMPLETED').length;
   const totalCandidates = safeCampaigns.reduce((acc, c) => acc + (c.total_candidates || 0), 0);
 
   const sourceList = filterTab === 'trash' ? trashCampaigns : safeCampaigns;
@@ -119,7 +138,7 @@ export default function CampaignDashboardPage({
       (c.product_name || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchSearch) return false;
     if (filterTab === 'trash' || filterTab === 'all') return true;
-    return (c.status || 'READY') === filterTab;
+    return resolveCampaignStatus(c) === filterTab;
   });
 
   const handleStatusChange = async (e, campId, newStatus) => {
@@ -308,7 +327,7 @@ export default function CampaignDashboardPage({
             <div className="flex flex-wrap items-center gap-4">
               {[
                 { id: 'all', label: '전체', count: totalCampaigns },
-                { id: 'READY', label: '준비/분석', count: readyCount },
+                { id: 'READY', label: '준비', count: readyCount },
                 { id: 'IN_PROGRESS', label: '진행 중', count: inProgressCount },
                 { id: 'COMPLETED', label: '종료', count: completedCount },
               ].map((t) => (
@@ -365,7 +384,7 @@ export default function CampaignDashboardPage({
             <div className="divide-y divide-slate-100">
               {filtered.map((camp) => {
                 const hasCandidates = (camp.total_candidates || 0) > 0;
-                const statusKey = camp.status || 'READY';
+                const statusKey = resolveCampaignStatus(camp);
                 const statusInfo = STATUS_META[statusKey] || STATUS_META.READY;
                 const dDay = calcDDayText(camp.end_date);
                 const formatEmoji =
@@ -488,18 +507,13 @@ export default function CampaignDashboardPage({
                       )}
                     </button>
 
-                    {/* 3-Stage Calm Status Dropdown */}
-                    <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-                      <select
-                        value={statusKey}
-                        onChange={(e) => handleStatusChange(e, camp.id, e.target.value)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border cursor-pointer focus:outline-none whitespace-nowrap ${statusInfo.badgeClass}`}
-                      >
-                        <option value="READY">준비/분석</option>
-                        <option value="IN_PROGRESS">진행 중</option>
-                        <option value="COMPLETED">종료</option>
-                      </select>
-                    </div>
+                    {/* Schedule-Synced Automatic Status Badge */}
+                    <span
+                      title="오늘 날짜 및 캠페인 일정에 따라 자동 반영됩니다"
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border whitespace-nowrap shrink-0 ${statusInfo.badgeClass}`}
+                    >
+                      {statusInfo.label}
+                    </span>
 
                     {/* Action Icons: Upload / Clone Concept / Soft Delete */}
                     <div className="flex items-center gap-1 shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
