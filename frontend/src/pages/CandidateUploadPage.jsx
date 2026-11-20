@@ -4,6 +4,16 @@ import { campaignsApi } from '../api/client';
 
 const HEADER_TOKENS = new Set(['instagram_id', 'id', 'username', 'handle', '인스타아이디', '아이디', '계정']);
 
+// 경과 시간(초)별 동적 로딩 안내 큐 (3초 -> 8초(+5) -> 13초(+5) -> 18초(+5) -> 23초(+5))
+const LOADING_STEPS = [
+  { afterSec: 0, emoji: '🚀', title: '피드 수집 시작', desc: '후보자들의 최근 프로필과 릴스 콘텐츠를 불러오고 있어요.' },
+  { afterSec: 3, emoji: '⚡', title: '서두르고 있어요!', desc: '게시물의 이미지 감도와 톤앤매너를 꼼꼼히 살피는 중입니다.' },
+  { afterSec: 8, emoji: '🔍', title: '브랜드 DNA 정밀 대조 중', desc: '우리 브랜드 추구미와 캠페인 가이드라인을 AI가 한 땀 한 땀 검증하고 있어요.' },
+  { afterSec: 13, emoji: '💡', title: '추천 원고료 & 매칭률 계산', desc: '조금만 기다려주세요! 팔로워 대비 적정 협찬 단가를 산정하고 있어요.' },
+  { afterSec: 18, emoji: '🎯', title: '마무리 정리 중!', desc: '거의 다 끝났습니다! 분석 결과를 보기 쉽게 정리하고 있어요.' },
+  { afterSec: 23, emoji: '☕', title: '전수 정밀 분석 마무리 중', desc: '후보 수가 많거나 심층 비전 분석 중이라 시간이 조금 더 소요되고 있어요. 안전하게 완료할게요!' },
+];
+
 function parseCandidateHandles(rawText) {
   if (!rawText) return { clean: [], dups: 0 };
   const tokens = rawText.split(/[\r\n,;\s]+/).map((l) => l.trim()).filter(Boolean);
@@ -38,7 +48,13 @@ export default function CandidateUploadPage({ campaign, onBack, onBackToForm, on
   const [manualText, setManualText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(18);
+  const [elapsedSec, setElapsedSec] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const currentTip = useMemo(() => {
+    const matched = LOADING_STEPS.filter((s) => elapsedSec >= s.afterSec);
+    return matched[matched.length - 1] || LOADING_STEPS[0];
+  }, [elapsedSec]);
 
   const { clean: manualIds, dups: manualDupCount } = useMemo(
     () => parseCandidateHandles(manualText),
@@ -48,17 +64,25 @@ export default function CandidateUploadPage({ campaign, onBack, onBackToForm, on
   const activeIds = inputMode === 'file' ? previewIds : manualIds;
   const canStartAnalysis = inputMode === 'file' ? Boolean(file && previewIds.length > 0) : manualIds.length > 0;
 
-  // 비동기 분석 프로그레스 상태 시뮬레이션
+  // 비동기 분석 프로그레스 및 경과 시간 타이머(1초 단위)
   useEffect(() => {
-    if (!analyzing) return;
+    if (!analyzing) {
+      setElapsedSec(0);
+      return;
+    }
     setProgress(22);
+    setElapsedSec(0);
     const t1 = setTimeout(() => setProgress(54), 1200);
     const t2 = setTimeout(() => setProgress(78), 3200);
     const t3 = setTimeout(() => setProgress(91), 6500);
+    const timer = setInterval(() => {
+      setElapsedSec((prev) => prev + 1);
+    }, 1000);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearInterval(timer);
     };
   }, [analyzing]);
 
@@ -150,6 +174,23 @@ export default function CandidateUploadPage({ campaign, onBack, onBackToForm, on
               className="h-full bg-brand-sky rounded-full transition-all duration-700"
               style={{ width: `${progress}%` }}
             />
+          </div>
+
+          {/* 경과 시간에 따라 동적으로 변하는 로딩 안내 배너 (3초 -> +5초 간격 전환) */}
+          <div
+            key={currentTip.afterSec}
+            className="mt-5 p-4 rounded-xl bg-sky-50/70 border border-sky-100 flex items-start gap-3 transition-all duration-300"
+          >
+            <span className="text-xl leading-none mt-0.5">{currentTip.emoji}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-brand-navy">{currentTip.title}</span>
+                <span className="text-[11px] font-medium text-sky-600/80 tabular-nums">
+                  {elapsedSec}초 경과
+                </span>
+              </div>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{currentTip.desc}</p>
+            </div>
           </div>
         </div>
 
