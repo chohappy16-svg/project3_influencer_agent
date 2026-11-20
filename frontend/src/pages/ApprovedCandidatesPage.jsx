@@ -201,7 +201,9 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
                       {item.recommended_fee}
                     </td>
                     <td className="py-4 px-4 text-slate-600">{item.campaign_title}</td>
-                    <td className="py-4 px-4 text-slate-600">{user?.company_name || '마케터'}</td>
+                    <td className="py-4 px-4 text-slate-600" title={user?.email || ''}>
+                      {user?.email ? user.email.split('@')[0] : '마케터'}
+                    </td>
                     <td className="py-4 px-6">
                       <div className="inline-flex items-center gap-2">
                         <span className="inline-flex px-2.5 py-1 rounded-md bg-emerald-50 text-brand-mint font-bold border border-emerald-200">
