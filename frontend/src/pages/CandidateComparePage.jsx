@@ -15,6 +15,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Check, X, ExternalLink, AlertCircle, Loader2, Plus, Scale } from 'lucide-react';
 import { campaignsApi } from '../api/client';
 import { ApprovalStateBadge, FitStatusBadge } from '../components/StatusBadge';
+import { InfoTooltip } from '../components/InfoTooltip';
 
 const SKIN_MAP = {
   DRY: '건성',
@@ -198,7 +199,14 @@ export default function CandidateComparePage({
             className="grid divide-x divide-slate-100 border-t border-slate-100"
             style={{ gridTemplateColumns: `200px repeat(${candidates.length}, minmax(240px, 1fr))` }}
           >
-            <div className="p-4 px-6 bg-slate-50/50 text-xs font-semibold text-slate-600">비주얼 감도 점수</div>
+            <div className="p-4 px-6 bg-slate-50/50 text-xs font-semibold text-slate-600 flex items-center">
+              <span>비주얼 감도 점수</span>
+              <InfoTooltip title="비주얼 감도 점수 (Visual Aesthetic)" align="left">
+                <p>최근 피드 이미지·릴스의 조명, 구도, 색감, 피부 표현 완성도를 AI 비전이 100점 만점으로 환산한 평균 점수입니다.</p>
+                <p className="text-emerald-300">• 80점 이상: 브랜드 화보급 고감도 무드</p>
+                <p className="text-sky-300">• 60~79점: 자연스러운 데일리 연출</p>
+              </InfoTooltip>
+            </div>
             {candidates.map((c) => {
               const score = avgAestheticScore(c) || c.overall_match_percentage;
               return (
