@@ -508,6 +508,35 @@ def _build_safety_refusal_eval(reason_detail: str = "") -> schemas.InfluencerAIO
     )
 
 
+def _apply_hard_constraints_guardrail(
+    res: schemas.InfluencerAIOutputSchema,
+    campaign_appeal: str,
+) -> schemas.InfluencerAIOutputSchema:
+    """
+    마케터 가이드라인의 자연어 필수조건(Hard Constraints)을 사후 검증하는 방어 가드레일:
+    - '반려동물 있어야 함/필수/보유/키우는' 조건이 있는데 family_pet_exposure가 UNKNOWN/NONE_VISIBLE인 경우
+    - 무조건 APPROVE를 취소하고 REVIEW_NEEDED로 하향 조정 및 위험 충돌 요소 추가
+    """
+    appeal_str = (campaign_appeal or "").lower()
+    pet_tokens = ("반려동물", "반려견", "반려묘", "강아지", "고양이", "펫", "pet")
+    must_tokens = ("있어야", "필수", "키우", "보유", "동반", "함께", "필요", "경험")
+
+    has_pet_requirement = any(p in appeal_str for p in pet_tokens) and any(m in appeal_str for m in must_tokens)
+
+    if has_pet_requirement and res.family_pet_exposure in ("NONE_VISIBLE", "UNKNOWN"):
+        if res.fit_status == "APPROVE":
+            res.fit_status = "REVIEW_NEEDED"
+            res.overall_match_percentage = min(68, res.overall_match_percentage)
+            warning_msg = "캠페인 필수 조건(반려동물 노출/보유)이 피드 내에서 확인되지 않아 '검토 필요'로 안전 하향 조정됨"
+            if warning_msg not in res.expected_collisions:
+                res.expected_collisions.insert(0, warning_msg)
+            if not any("반려동물" in str(b) for b in res.rationale_bullets):
+                res.rationale_bullets.insert(0, warning_msg)
+            res.one_line_verdict = f"{res.one_line_verdict[:50]} (반려동물 확인 요망)"[:85]
+
+    return res
+
+
 async def _run_track2_gpt4o_evaluation(
     profile: Dict[str, Any],
     b64_images: List[str],
@@ -530,6 +559,13 @@ async def _run_track2_gpt4o_evaluation(
         "[절대 원칙 - 환각(Hallucination) 통제 및 언어 강제]\n"
         "- skin_type, family_pet_exposure, communication_authenticity 필드는 제공된 바이오·캡션·이미지에서 "
         "명확한 근거가 확인된 경우에만 값을 지정하고, 조금이라도 불확실하거나 정보가 없으면 추측하지 말고 반드시 'UNKNOWN'을 반환하세요.\n"
+        "- [마케터 가이드라인 자연어 필수조건 해석 규칙]\n"
+        "  * 캠페인 가이드라인에 '~있어야 함', '~필수', '~보유', '~경험자', '~키우는', '~타입만' 등 자격/보유 조건을 요구하는 문구가 포함된 경우, "
+        "이는 단순 선호가 아닌 '필수 전제조건(Hard Constraint)'입니다.\n"
+        "  * 인플루언서의 피드·바이오에서 해당 필수 조건(예: 반려동물 유무, 특정 피부타입, 자녀 등)이 직접 확인되지 않거나('UNKNOWN', 'NONE_VISIBLE') 불일치하면, "
+        "아무리 톤앤매너와 비주얼이 뛰어나더라도 절대 'APPROVE(적합)'를 부여하지 마세요.\n"
+        "  * 이 경우 반드시 'REVIEW_NEEDED(검토 필요)' 또는 'REJECT(부적합)'로 판정하고, overall_match_percentage를 65점 이하로 감점하며, "
+        "expected_collisions 1순위에 '캠페인 요구 조건(예: 반려동물 있어야 함 등) 피드 내 미확인'을 명확히 명시하세요.\n"
         "- 5대 가이드라인 중 인플루언서 기존 화풍과 부딪히는 요소는 expected_collisions에 명시하세요.\n"
         "- 감성/스토리텔링이 뛰어나지만 일부 가이드라인 조율이 필요하면 CREATIVE_EXCEPTION으로 판정하세요.\n"
         "- [필수] 인플루언서의 프로필, 바이오, 게시물 캡션이 영어·일본어 등 외국어로 작성되어 있더라도, "
@@ -605,6 +641,7 @@ async def _run_track2_gpt4o_evaluation(
                 except Exception:
                     pass
 
+            parsed_out = _apply_hard_constraints_guardrail(parsed_out, campaign_appeal)
             return parsed_out, p_tok, c_tok, usd, krw, latency
         except Exception as exc:
             err_lower = str(exc).lower()
@@ -644,6 +681,7 @@ async def _run_track2_gpt4o_evaluation(
     )
     p_tok, c_tok = 1650, 420
     usd, krw = _calc_cost_krw("gpt4o", p_tok, c_tok)
+    fallback_eval = _apply_hard_constraints_guardrail(fallback_eval, campaign_appeal)
     return fallback_eval, p_tok, c_tok, usd, krw, round(time.perf_counter() - start_t, 3)
 
 
