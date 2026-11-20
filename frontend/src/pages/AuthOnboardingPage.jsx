@@ -7,18 +7,25 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [step, setStep] = useState('form'); // 'form' | 'extracting' | 'dna_confirm'
 
-  // Form states (기본값 비움 + 플레이스홀더 가이드 노출)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Login form states
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Signup form states (로그인과 완전히 분리하여 탭 전환 시 독립적 초기화 보장)
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [brandUrl, setBrandUrl] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
 
-  // 실시간 유효성 검증
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`']/.test(password);
-  const isPasswordValid = password.length >= 8 && password.length <= 32 && hasSpecialChar;
+  // 중복 가입 경고 모달 상태
+  const [duplicateEmailModal, setDuplicateEmailModal] = useState('');
+
+  // 실시간 유효성 검증 (회원가입용)
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail.trim());
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`']/.test(signupPassword);
+  const isPasswordValid = signupPassword.length >= 8 && signupPassword.length <= 32 && hasSpecialChar;
   const isSignupFormValid =
     isEmailValid &&
     isPasswordValid &&
@@ -48,11 +55,11 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
     setErrorMsg('');
     setLoading(true);
     try {
-      const data = await authApi.login({ email, password });
+      const data = await authApi.login({ email: loginEmail, password: loginPassword });
       localStorage.setItem('influenceops_token', data.access_token);
       onAuthSuccess({
         user_id: data.user_id,
-        email,
+        email: loginEmail,
         company_name: data.company_name || '내 워크스페이스',
         brand_dna_summary: data.brand_dna_summary || '',
       });
@@ -79,13 +86,13 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
     setLoading(true);
     try {
       const signupRes = await authApi.signup({
-        email,
-        password,
+        email: signupEmail,
+        password: signupPassword,
         company_name: companyName,
         brand_url: brandUrl,
       });
       // 바로 로그인하여 JWT 토큰 확보
-      const loginRes = await authApi.login({ email, password });
+      const loginRes = await authApi.login({ email: signupEmail, password: signupPassword });
       localStorage.setItem('influenceops_token', loginRes.access_token);
 
       setProgress(100);
@@ -93,7 +100,7 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
         signupRes,
         userInfo: {
           user_id: loginRes.user_id,
-          email,
+          email: signupEmail,
           company_name: loginRes.company_name || companyName,
           brand_url: brandUrl,
           brand_dna_summary: signupRes.brand_dna,
@@ -103,8 +110,12 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
     } catch (err) {
       setStep('form');
       const detail = err.response?.data?.detail;
+      if (err.response?.status === 400 && typeof detail === 'string' && detail.includes('이미 가입')) {
+        setDuplicateEmailModal(signupEmail);
+        return;
+      }
       const msg = Array.isArray(detail)
-        ? detail[0]?.msg || '입력 형식이 올바르지 않습니다. (비밀번호 4자 이상, 이메일 형식 확인)'
+        ? detail[0]?.msg || '입력 형식이 올바르지 않습니다. (비밀번호 8자 이상, 이메일 형식 확인)'
         : typeof detail === 'string'
         ? detail
         : '회원가입 중 오류가 발생했습니다.';
@@ -201,10 +212,10 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                   <input
                     type="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="name@brand.com"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky placeholder:text-slate-400"
                   />
                 </div>
                 <div>
@@ -212,10 +223,10 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                   <input
                     type="password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky placeholder:text-slate-400"
                   />
                 </div>
 
@@ -259,16 +270,16 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                   <input
                     type="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
                     placeholder="name@brand.com"
                     className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 transition placeholder:text-slate-400 ${
-                      email.length > 0 && !isEmailValid
+                      signupEmail.length > 0 && !isEmailValid
                         ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
                         : 'border-slate-200 focus:ring-brand-sky/30 focus:border-brand-sky'
                     }`}
                   />
-                  {email.length > 0 && !isEmailValid && (
+                  {signupEmail.length > 0 && !isEmailValid && (
                     <p className="mt-1.5 text-[11px] font-medium text-red-500 flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       올바른 이메일 형식을 입력해 주세요. (예: name@brand.com)
@@ -282,22 +293,22 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                     required
                     minLength={8}
                     maxLength={32}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
                     placeholder="8~32자, 특수문자(!@# 등) 1개 이상 포함"
                     className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 transition placeholder:text-slate-400 ${
-                      password.length > 0 && !isPasswordValid
+                      signupPassword.length > 0 && !isPasswordValid
                         ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
                         : 'border-slate-200 focus:ring-brand-sky/30 focus:border-brand-sky'
                     }`}
                   />
-                  {password.length > 0 && !isPasswordValid && (
+                  {signupPassword.length > 0 && !isPasswordValid && (
                     <p className="mt-1.5 text-[11px] font-medium text-red-500 flex items-center gap-1">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       8~32자 이내, 특수문자(!@# 등)를 최소 1개 이상 포함해 주세요.
                     </p>
                   )}
-                  {password.length > 0 && isPasswordValid && (
+                  {signupPassword.length > 0 && isPasswordValid && (
                     <p className="mt-1.5 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
                       <Check className="w-3.5 h-3.5 shrink-0" />
                       사용 가능한 안전한 비밀번호입니다.
@@ -515,6 +526,45 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
           <span>문의하기</span>
         </div>
       </footer>
+
+      {/* 이미 가입된 이메일 경고 모달 팝업 */}
+      {duplicateEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-slate-200 p-6 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-11 h-11 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-brand-navy">이미 가입된 이메일입니다!</h3>
+            <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+              입력하신 <span className="font-semibold text-brand-navy">{duplicateEmailModal}</span> 계정으로 이미 가입 이력이 존재하여 중복 가입이 차단되었습니다.
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoginEmail(duplicateEmailModal);
+                  setLoginPassword('');
+                  setErrorMsg('');
+                  setDuplicateEmailModal('');
+                  setMode('login');
+                }}
+                className="w-full py-2.5 rounded-xl bg-brand-sky hover:bg-sky-600 text-white text-xs font-semibold transition"
+              >
+                이 이메일로 로그인하러 가기
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDuplicateEmailModal('');
+                }}
+                className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition"
+              >
+                다른 이메일로 다시 입력
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
