@@ -7,13 +7,24 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [step, setStep] = useState('form'); // 'form' | 'extracting' | 'dna_confirm'
 
-  // Form states
-  const [email, setEmail] = useState('marketer@influenceops.ai');
-  const [password, setPassword] = useState('password1234');
-  const [companyName, setCompanyName] = useState('클린뷰티 랩');
-  const [brandUrl, setBrandUrl] = useState('https://www.innisfree.com');
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  // Form states (기본값 비움 + 플레이스홀더 가이드 노출)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [brandUrl, setBrandUrl] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
+
+  // 실시간 유효성 검증
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`']/.test(password);
+  const isPasswordValid = password.length >= 8 && password.length <= 32 && hasSpecialChar;
+  const isSignupFormValid =
+    isEmailValid &&
+    isPasswordValid &&
+    companyName.trim().length > 0 &&
+    brandUrl.trim().length > 0 &&
+    agreeTerms;
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -46,7 +57,13 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
         brand_dna_summary: data.brand_dna_summary || '',
       });
     } catch (err) {
-      setErrorMsg(err.response?.data?.detail || '로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.');
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail[0]?.msg || '입력 정보를 확인해 주세요.'
+        : typeof detail === 'string'
+        ? detail
+        : '로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.';
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
@@ -55,8 +72,7 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
   const handleSignup = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-    if (!agreeTerms) {
-      setErrorMsg('이용약관 및 개인정보 처리방침에 동의해 주세요.');
+    if (!isSignupFormValid) {
       return;
     }
     setStep('extracting');
@@ -86,7 +102,13 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
       setTimeout(() => setStep('dna_confirm'), 450);
     } catch (err) {
       setStep('form');
-      setErrorMsg(err.response?.data?.detail || '회원가입 중 오류가 발생했습니다.');
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail)
+        ? detail[0]?.msg || '입력 형식이 올바르지 않습니다. (비밀번호 4자 이상, 이메일 형식 확인)'
+        : typeof detail === 'string'
+        ? detail
+        : '회원가입 중 오류가 발생했습니다.';
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
@@ -240,20 +262,47 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@brand.com"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 transition placeholder:text-slate-400 ${
+                      email.length > 0 && !isEmailValid
+                        ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
+                        : 'border-slate-200 focus:ring-brand-sky/30 focus:border-brand-sky'
+                    }`}
                   />
+                  {email.length > 0 && !isEmailValid && (
+                    <p className="mt-1.5 text-[11px] font-medium text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      올바른 이메일 형식을 입력해 주세요. (예: name@brand.com)
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1.5">비밀번호</label>
                   <input
                     type="password"
                     required
-                    minLength={4}
+                    minLength={8}
+                    maxLength={32}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="영문, 숫자 포함 8자 이상"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    placeholder="8~32자, 특수문자(!@# 등) 1개 이상 포함"
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 transition placeholder:text-slate-400 ${
+                      password.length > 0 && !isPasswordValid
+                        ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
+                        : 'border-slate-200 focus:ring-brand-sky/30 focus:border-brand-sky'
+                    }`}
                   />
+                  {password.length > 0 && !isPasswordValid && (
+                    <p className="mt-1.5 text-[11px] font-medium text-red-500 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      8~32자 이내, 특수문자(!@# 등)를 최소 1개 이상 포함해 주세요.
+                    </p>
+                  )}
+                  {password.length > 0 && isPasswordValid && (
+                    <p className="mt-1.5 text-[11px] font-medium text-emerald-600 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5 shrink-0" />
+                      사용 가능한 안전한 비밀번호입니다.
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1.5">브랜드명 (회사명)</label>
@@ -262,8 +311,8 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                     required
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder="예: 온유 뷰티"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    placeholder="예: 글로우랩"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky placeholder:text-slate-400"
                   />
                 </div>
                 <div>
@@ -273,8 +322,8 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                     required
                     value={brandUrl}
                     onChange={(e) => setBrandUrl(e.target.value)}
-                    placeholder="https://onyou.example"
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky"
+                    placeholder="https://brand.com"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-sky/30 focus:border-brand-sky placeholder:text-slate-400"
                   />
                 </div>
 
@@ -285,7 +334,7 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
                   </p>
                 </div>
 
-                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={agreeTerms}
@@ -297,9 +346,14 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3 rounded-xl bg-brand-sky hover:bg-sky-600 text-white font-semibold text-sm transition"
+                  disabled={loading || !isSignupFormValid}
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 ${
+                    loading || !isSignupFormValid
+                      ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                      : 'bg-brand-sky hover:bg-sky-600 text-white shadow-sm'
+                  }`}
                 >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                   가입 완료
                 </button>
 

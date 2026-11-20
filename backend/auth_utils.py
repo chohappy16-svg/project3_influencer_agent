@@ -10,11 +10,11 @@ import os
 from pathlib import Path
 from typing import Optional
 
+import bcrypt
 from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 import models
@@ -27,17 +27,23 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "influenceops-super-secret-jwt-key-chan
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24시간 유지
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(password: str) -> str:
     """평문 비밀번호를 Bcrypt($2b$12$...) 단방향 해시로 암호화합니다."""
-    return pwd_context.hash(password)
+    pwd_bytes = password.encode("utf-8")[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """입력된 평문 비밀번호와 DB의 Bcrypt 해시값을 대조합니다."""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8")[:72],
+            hashed_password.encode("utf-8"),
+        )
+    except Exception:
+        return False
 
 
 def create_access_token(data: dict, expires_delta: Optional[datetime.timedelta] = None) -> str:
