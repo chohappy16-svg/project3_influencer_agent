@@ -160,6 +160,7 @@ async def create_campaign(
         status=req.status or "READY",
         start_date=req.start_date,
         end_date=req.end_date,
+        is_sourcing_completed=req.is_sourcing_completed or False,
         is_deleted=False,
         campaign_appeal=req.campaign_appeal,
         total_candidates=0,
@@ -236,6 +237,8 @@ async def update_campaign(
         campaign.start_date = req.start_date
     if req.end_date is not None:
         campaign.end_date = req.end_date
+    if req.is_sourcing_completed is not None:
+        campaign.is_sourcing_completed = req.is_sourcing_completed
 
     db.commit()
     db.refresh(campaign)

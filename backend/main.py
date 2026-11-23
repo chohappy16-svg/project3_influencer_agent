@@ -37,6 +37,8 @@ try:
                 _conn.execute(text("ALTER TABLE campaigns ADD COLUMN start_date VARCHAR(20)"))
             if "end_date" not in _camp_cols:
                 _conn.execute(text("ALTER TABLE campaigns ADD COLUMN end_date VARCHAR(20)"))
+            if "is_sourcing_completed" not in _camp_cols:
+                _conn.execute(text("ALTER TABLE campaigns ADD COLUMN is_sourcing_completed BOOLEAN DEFAULT FALSE"))
             if "is_deleted" not in _camp_cols:
                 _conn.execute(text("ALTER TABLE campaigns ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE"))
             if "deleted_at" not in _camp_cols:
