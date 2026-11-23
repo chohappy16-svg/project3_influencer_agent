@@ -40,10 +40,10 @@ export default function CampaignCreatePage({ user, template, onBack, onCreated }
   const defaultEnd = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
   const [title, setTitle] = useState(
-    template ? `[복사] ${template.title}` : '11월 저자극 시카 수분 앰플 캠페인'
+    template ? `[복사] ${template.title}` : ''
   );
   const [productName, setProductName] = useState(
-    template?.product_name || '저자극 시카 수분 앰플 30ml'
+    template?.product_name || ''
   );
   const [productUrl, setProductUrl] = useState(template?.product_url || '');
   const [channel, setChannel] = useState('인스타그램');
@@ -169,18 +169,20 @@ export default function CampaignCreatePage({ user, template, onBack, onCreated }
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-brand-sky"
+                  placeholder="예: 11월 저자극 시카 수분 앰플 캠페인"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-brand-sky"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">홍보 제품 *</label>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">제공 제품 *</label>
                   <input
                     type="text"
                     required
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-brand-sky"
+                    placeholder="예: 저자극 시카 수분 앰플 30ml"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:border-brand-sky"
                   />
                 </div>
                 <div>

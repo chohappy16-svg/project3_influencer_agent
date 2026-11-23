@@ -153,9 +153,14 @@ export default function CampaignResultsPage({
   });
 
   const totalCount = sortedResults.length;
-  const rejectedCount = sortedResults.filter((r) => r.fit_status === 'REJECT').length;
+  const suitableCount = sortedResults.filter(
+    (r) => r.fit_status === 'APPROVE' || r.fit_status === 'CREATIVE_EXCEPTION'
+  ).length;
+  const reviewNeededCount = sortedResults.filter((r) => r.fit_status === 'REVIEW_NEEDED').length;
+  const rejectedAllCount = sortedResults.filter(
+    (r) => !['APPROVE', 'CREATIVE_EXCEPTION', 'REVIEW_NEEDED'].includes(r.fit_status)
+  ).length;
   const approvedCount = sortedResults.filter((r) => r.approval_state === 'APPROVED').length;
-  const deepAnalyzedCount = sortedResults.filter((r) => r.fit_status !== 'REJECT').length;
 
   const filtered = sortedResults.filter((r) => {
     const matchText =
@@ -166,6 +171,7 @@ export default function CampaignResultsPage({
 
     if (statusTab === 'APPROVE') return r.fit_status === 'APPROVE';
     if (statusTab === 'CREATIVE_EXCEPTION') return r.fit_status === 'CREATIVE_EXCEPTION';
+    if (statusTab === 'REVIEW_NEEDED') return r.fit_status === 'REVIEW_NEEDED';
     if (statusTab === 'ISSUES')
       return (
         r.fit_status === 'REJECT' ||
@@ -221,7 +227,7 @@ export default function CampaignResultsPage({
 
   const handleBulkDecision = async (targetIds, decision) => {
     if (targetIds.length === 0 || bulkProcessing) return;
-    const label = decision === 'APPROVED' ? '승인' : '승인 취소';
+    const label = decision === 'APPROVED' ? '내부 선정' : '선정 취소';
     if (!window.confirm(`해당 ${targetIds.length}명의 후보를 일괄 ${label} 처리하시겠습니까?`)) {
       return;
     }
@@ -416,20 +422,20 @@ export default function CampaignResultsPage({
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">업로드 후보</div>
+          <div className="text-xs font-semibold text-slate-500">업로드 인원 전체</div>
           <div className="text-3xl font-extrabold text-brand-navy mt-2">{totalCount}명</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">1차 통과 (정밀 분석)</div>
-          <div className="text-3xl font-extrabold text-brand-navy mt-2">{deepAnalyzedCount}명</div>
+          <div className="text-xs font-semibold text-slate-500">적합 (예외 추천 포함)</div>
+          <div className="text-3xl font-extrabold text-brand-mint mt-2">{suitableCount}명</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">1차 제외 (부적합)</div>
-          <div className="text-3xl font-extrabold text-brand-orange mt-2">{rejectedCount}명</div>
+          <div className="text-xs font-semibold text-slate-500">검토 필요</div>
+          <div className="text-3xl font-extrabold text-amber-600 mt-2">{reviewNeededCount}명</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">최종 승인 완료</div>
-          <div className="text-3xl font-extrabold text-brand-mint mt-2">{approvedCount}명</div>
+          <div className="text-xs font-semibold text-slate-500">부적합</div>
+          <div className="text-3xl font-extrabold text-brand-orange mt-2">{rejectedAllCount}명</div>
         </div>
       </div>
 
@@ -442,8 +448,9 @@ export default function CampaignResultsPage({
               { id: 'ALL', label: `전체 (${totalCount})` },
               { id: 'APPROVE', label: '적합' },
               { id: 'CREATIVE_EXCEPTION', label: '예외 추천' },
-              { id: 'ISSUES', label: '부적합·판독불가' },
-              { id: 'APPROVED', label: `승인 완료 (${approvedCount})` },
+              { id: 'REVIEW_NEEDED', label: `검토 필요 (${reviewNeededCount})` },
+              { id: 'ISSUES', label: `부적합 (${rejectedAllCount})` },
+              { id: 'APPROVED', label: `선정 완료 (${approvedCount})` },
             ].map((t) => (
               <button
                 key={t.id}
@@ -748,8 +755,8 @@ export default function CampaignResultsPage({
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 {selectedApprovedIds.length > 0
-                  ? `대기 ${selectedPendingIds.length}명 승인`
-                  : `${selectedPendingIds.length}명 일괄 승인`}
+                  ? `대기 ${selectedPendingIds.length}명 선정`
+                  : `${selectedPendingIds.length}명 일괄 선정`}
               </button>
             )}
             {selectedApprovedIds.length > 0 && (
@@ -761,8 +768,8 @@ export default function CampaignResultsPage({
               >
                 <X className="w-3.5 h-3.5" />
                 {selectedPendingIds.length > 0
-                  ? `승인완료 ${selectedApprovedIds.length}명 취소`
-                  : `${selectedApprovedIds.length}명 일괄 승인 취소`}
+                  ? `선정완료 ${selectedApprovedIds.length}명 취소`
+                  : `${selectedApprovedIds.length}명 일괄 선정 취소`}
               </button>
             )}
             <button

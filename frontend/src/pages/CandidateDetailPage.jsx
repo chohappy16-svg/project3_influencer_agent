@@ -226,10 +226,10 @@ export default function CandidateDetailPage({
                 disabled={deciding}
                 onClick={() => handleDecision('PENDING')}
                 className="px-5 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-brand-mint text-xs font-bold flex items-center gap-1.5 transition disabled:opacity-60"
-                title="클릭 시 승인을 취소하고 검토 대기 상태로 되돌립니다"
+                title="클릭 시 선정을 취소하고 검토 대기 상태로 되돌립니다"
               >
                 {deciding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
-                승인 취소
+                선정 취소
               </button>
             ) : (
               <button
@@ -239,7 +239,7 @@ export default function CandidateDetailPage({
                 className="px-5 py-2.5 rounded-xl bg-brand-mint hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition disabled:opacity-60"
               >
                 {deciding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4" />}
-                최종 승인
+                선정 확정
               </button>
             )}
           </div>

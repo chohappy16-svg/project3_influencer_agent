@@ -22,7 +22,7 @@ export default function WorkspaceLayout({
 }) {
   const navItems = [
     { id: 'campaigns', label: '캠페인', icon: LayoutGrid, badge: campaignCount },
-    { id: 'approved', label: '승인 후보', icon: Users },
+    { id: 'approved', label: '선정 후보', icon: Users },
     { id: 'dna', label: '브랜드 DNA', icon: Dna },
     { id: 'settings', label: '설정', icon: Settings },
   ];

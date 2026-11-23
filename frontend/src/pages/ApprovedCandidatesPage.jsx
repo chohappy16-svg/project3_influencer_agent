@@ -82,9 +82,9 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-brand-navy">승인 후보 관리</h1>
+          <h1 className="text-2xl font-bold text-brand-navy">선정 후보 관리</h1>
           <p className="text-sm text-slate-500 mt-1">
-            최종 승인한 크리에이터를 캠페인별로 모아보고 관리하세요.
+            내부에서 섭외 대상으로 최종 선정한 크리에이터를 캠페인별로 모아보고 관리하세요.
           </p>
         </div>
         <button
@@ -92,28 +92,28 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
           disabled={exporting || approvedList.length === 0}
           className="px-5 py-2.5 rounded-xl bg-brand-mint hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition disabled:opacity-50"
         >
-          <Download className="w-4 h-4" /> {exporting ? '생성 중...' : '승인 목록 내보내기 ↓'}
+          <Download className="w-4 h-4" /> {exporting ? '생성 중...' : '선정 목록 내보내기 ↓'}
         </button>
       </div>
 
       {/* 3 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">전체 승인 후보</div>
+          <div className="text-xs font-semibold text-slate-500">전체 선정 후보</div>
           <div className="flex items-baseline gap-2.5 mt-3">
             <span className="text-3xl font-extrabold text-brand-navy">{approvedList.length}명</span>
             <span className="text-xs text-slate-400">워크스페이스 전체</span>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">승인 캠페인</div>
+          <div className="text-xs font-semibold text-slate-500">선정 캠페인</div>
           <div className="flex items-baseline gap-2.5 mt-3">
             <span className="text-3xl font-extrabold text-brand-navy">{uniqueCampCount}개</span>
-            <span className="text-xs text-slate-400">승인 후보가 있는 캠페인</span>
+            <span className="text-xs text-slate-400">선정 후보가 있는 캠페인</span>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">선택 필터 승인</div>
+          <div className="text-xs font-semibold text-slate-500">선택 필터 선정</div>
           <div className="flex items-baseline gap-2.5 mt-3">
             <span className="text-3xl font-extrabold text-brand-mint">{filtered.length}명</span>
             <span className="text-xs text-slate-400">엑셀 내보내기 대상</span>
@@ -145,17 +145,17 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="승인 후보 검색"
+              placeholder="선정 후보 검색"
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-white/15 text-white placeholder-emerald-100 border border-white/25 focus:outline-none"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="py-16 text-center text-sm text-slate-400">승인 후보 목록을 불러오는 중...</div>
+          <div className="py-16 text-center text-sm text-slate-400">선정 후보 목록을 불러오는 중...</div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-slate-400">
-            아직 최종 승인된 인플루언서가 없습니다. 비교 뷰에서 후보를 승인해 주세요.
+            아직 내부 선정된 인플루언서가 없습니다. 결과 또는 비교 뷰에서 후보를 선정해 주세요.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -166,7 +166,7 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
                   <th className="py-3 px-4">매칭률</th>
                   <th className="py-3 px-4">예상 원고료</th>
                   <th className="py-3 px-4">캠페인</th>
-                  <th className="py-3 px-4">승인자</th>
+                  <th className="py-3 px-4">선정자</th>
                   <th className="py-3 px-6">상태</th>
                 </tr>
               </thead>
@@ -207,17 +207,17 @@ export default function ApprovedCandidatesPage({ user, campaigns, onSelectDetail
                     <td className="py-4 px-6">
                       <div className="inline-flex items-center gap-2">
                         <span className="inline-flex px-2.5 py-1 rounded-md bg-emerald-50 text-brand-mint font-bold border border-emerald-200">
-                          승인 완료
+                          선정 완료
                         </span>
                         <button
                           type="button"
                           disabled={cancelingId === item.id}
                           onClick={(e) => handleCancelApproval(e, item)}
-                          title="승인을 취소하고 검토 대기 상태로 되돌립니다"
+                          title="선정을 취소하고 검토 대기 상태로 되돌립니다"
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 font-semibold transition disabled:opacity-50"
                         >
                           <RotateCcw className="w-3 h-3" />
-                          {cancelingId === item.id ? '취소 중' : '승인 취소'}
+                          {cancelingId === item.id ? '취소 중' : '선정 취소'}
                         </button>
                       </div>
                     </td>
