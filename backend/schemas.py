@@ -141,6 +141,7 @@ class CampaignCreate(BaseModel):
     status: str = Field(default="READY", examples=["READY"])
     start_date: Optional[str] = Field(default=None, examples=["2026-11-19"])
     end_date: Optional[str] = Field(default=None, examples=["2026-12-19"])
+    is_sourcing_completed: Optional[bool] = Field(default=False, description="섭외 완료/마감 여부")
     campaign_appeal: str = Field(
         default=(
             "1. 제품 패키지 정면 노출 1컷 이상 필수\n"
@@ -162,6 +163,7 @@ class CampaignUpdate(BaseModel):
     status: Optional[str] = None
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    is_sourcing_completed: Optional[bool] = None
 
 
 class CampaignResponse(BaseModel):
@@ -176,6 +178,7 @@ class CampaignResponse(BaseModel):
     status: Optional[str] = "READY"
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    is_sourcing_completed: Optional[bool] = False
     is_deleted: Optional[bool] = False
     deleted_at: Optional[datetime] = None
     campaign_appeal: str

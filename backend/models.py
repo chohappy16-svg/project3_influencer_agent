@@ -78,6 +78,7 @@ class Campaign(Base):
     status = Column(String(30), default="READY", index=True)  # 상태: READY(준비/분석) | IN_PROGRESS(진행 중) | COMPLETED(종료)
     start_date = Column(String(20), nullable=True)            # 시작일 (YYYY-MM-DD)
     end_date = Column(String(20), nullable=True)              # 종료일 (YYYY-MM-DD)
+    is_sourcing_completed = Column(Boolean, default=False, index=True) # 섭외 완료/마감 여부 (False: 섭외 진행 중, True: 섭외 완료)
     is_deleted = Column(Boolean, default=False, index=True)   # 휴지통 이동 여부 (소프트 딜리트)
     deleted_at = Column(DateTime(timezone=True), nullable=True) # 삭제 시각 (30일 경과 시 자동 영구 삭제 대상)
     campaign_appeal = Column(Text, nullable=False)            # 5대 가이드라인 텍스트

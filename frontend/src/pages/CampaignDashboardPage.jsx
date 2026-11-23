@@ -27,6 +27,8 @@ import {
   X,
   Package,
   ExternalLink,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { campaignsApi } from '../api/client';
 
@@ -215,6 +217,17 @@ export default function CampaignDashboardPage({
     }
   };
 
+  const handleToggleSourcing = async (e, camp) => {
+    e.stopPropagation();
+    try {
+      const nextState = !camp.is_sourcing_completed;
+      await campaignsApi.update(camp.id, { is_sourcing_completed: nextState });
+      onRefreshCampaigns && onRefreshCampaigns();
+    } catch {
+      alert('섭외 상태 변경 중 오류가 발생했습니다.');
+    }
+  };
+
   const formatDate = (iso) => {
     if (!iso) return '오늘';
     try {
@@ -274,32 +287,6 @@ export default function CampaignDashboardPage({
           </div>
         </div>
       </div>
-
-      {/* Attention Banner */}
-      {analyzedCampaigns > 0 && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <span className="text-lg font-extrabold text-brand-navy">{analyzedCampaigns}</span>
-            <div>
-              <div className="text-sm font-bold text-brand-navy">
-                검토할 캠페인이 {analyzedCampaigns}개 있어요
-              </div>
-              <div className="text-xs text-slate-500">
-                AI 분석이 완료되었습니다. 매칭 결과를 비교하고 최종 후보를 승인해 보세요.
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              const firstAnalyzed = campaigns.find((c) => (c.total_candidates || 0) > 0);
-              if (firstAnalyzed) onSelectCampaign(firstAnalyzed, 'results');
-            }}
-            className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-brand-navy hover:bg-slate-50 flex items-center gap-1.5 transition"
-          >
-            검토 대기 보기 <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
 
       {/* Main Grid: Campaign List (Left 8) + Brand DNA & Activity (Right 4) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -514,6 +501,32 @@ export default function CampaignDashboardPage({
                     >
                       {statusInfo.label}
                     </span>
+
+                    {/* Sourcing Status Badge / Interactive Toggle */}
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleSourcing(e, camp)}
+                      title={
+                        camp.is_sourcing_completed
+                          ? '인플루언서 섭외가 마감된 캠페인입니다. 클릭하면 섭외 진행 중으로 변경됩니다.'
+                          : '인플루언서 서칭 및 섭외가 진행 중인 캠페인입니다. 인원 확정 완료 시 클릭하여 마감하세요.'
+                      }
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border inline-flex items-center gap-1 shrink-0 whitespace-nowrap transition cursor-pointer ${
+                        camp.is_sourcing_completed
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                          : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      }`}
+                    >
+                      {camp.is_sourcing_completed ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> 섭외 완료
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="w-3 h-3 text-amber-600" /> 섭외 진행 중
+                        </>
+                      )}
+                    </button>
 
                     {/* Action Icons: Upload / Clone Concept / Soft Delete */}
                     <div className="flex items-center gap-1 shrink-0 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>

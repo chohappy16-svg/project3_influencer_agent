@@ -25,6 +25,7 @@ import {
   CheckSquare,
   Square,
   CheckCircle2,
+  Clock,
   X,
   Scale,
   Package,
@@ -61,6 +62,22 @@ export default function CampaignResultsPage({
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [savingProduct, setSavingProduct] = useState(false);
+  const [isSourcingDone, setIsSourcingDone] = useState(Boolean(campaign.is_sourcing_completed));
+
+  useEffect(() => {
+    setIsSourcingDone(Boolean(campaign.is_sourcing_completed));
+  }, [campaign.id, campaign.is_sourcing_completed]);
+
+  const handleToggleSourcing = async () => {
+    const nextState = !isSourcingDone;
+    setIsSourcingDone(nextState);
+    try {
+      await campaignsApi.update(campaign.id, { is_sourcing_completed: nextState });
+    } catch {
+      setIsSourcingDone(!nextState);
+      alert('섭외 상태 변경 중 오류가 발생했습니다.');
+    }
+  };
 
   useEffect(() => {
     setProductInfo({
@@ -293,6 +310,30 @@ export default function CampaignResultsPage({
           </p>
         </div>
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleToggleSourcing}
+            className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs ${
+              isSourcingDone
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+            }`}
+            title={
+              isSourcingDone
+                ? '현재 섭외가 마감된 상태입니다. 클릭 시 섭외 진행 중으로 변경됩니다.'
+                : '인원 선정을 모두 마치셨다면 클릭하여 섭외 완료로 마감하세요.'
+            }
+          >
+            {isSourcingDone ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 섭외 완료됨
+              </>
+            ) : (
+              <>
+                <Clock className="w-3.5 h-3.5 text-amber-600" /> 섭외 마감하기
+              </>
+            )}
+          </button>
           <button
             onClick={onUploadMore}
             className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-brand-navy hover:bg-slate-50 flex items-center gap-1.5"
