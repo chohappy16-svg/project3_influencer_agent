@@ -565,9 +565,9 @@ export default function CampaignDashboardPage({
               </span>
             </div>
 
-            <div className="text-base font-bold text-brand-navy">{user?.company_name || '클린뷰티 랩'}</div>
+            <div className="text-base font-bold text-brand-navy">{user?.company_name || '내 워크스페이스'}</div>
             <div className="text-xs text-slate-400 mt-0.5 truncate">
-              {user?.brand_url || 'https://www.innisfree.com'}
+              {user?.brand_url || '자사몰 미등록'}
             </div>
 
             <div className="flex flex-wrap gap-1.5 mt-3">

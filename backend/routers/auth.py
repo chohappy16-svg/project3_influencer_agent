@@ -157,13 +157,14 @@ def login(req: schemas.UserLoginRequest, db: Session = Depends(get_db)):
         )
 
     token = create_access_token(data={"sub": str(user.id), "email": user.email})
-    dna_text = user.brand_dnas[0].full_dna_text if user.brand_dnas else None
+    latest_dna = user.brand_dnas[-1] if user.brand_dnas else None
 
     return schemas.TokenResponse(
         access_token=token,
         user_id=user.id,
         company_name=user.company_name,
-        brand_dna_summary=dna_text,
+        brand_url=latest_dna.brand_url if latest_dna else None,
+        brand_dna_summary=latest_dna.full_dna_text if latest_dna else "",
     )
 
 

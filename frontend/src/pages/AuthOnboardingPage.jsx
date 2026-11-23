@@ -62,6 +62,7 @@ export default function AuthOnboardingPage({ onAuthSuccess }) {
         user_id: data.user_id,
         email: loginEmail,
         company_name: data.company_name || '내 워크스페이스',
+        brand_url: data.brand_url || '',
         brand_dna_summary: data.brand_dna_summary || '',
       });
     } catch (err) {
