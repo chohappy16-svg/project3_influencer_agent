@@ -3,12 +3,9 @@ import { Check, Sparkles, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
 import { authApi } from '../api/client';
 
 export default function BrandDnaSettingsPage({ user, onUpdateLocalDna, onBack }) {
-  const [companyName, setCompanyName] = useState(user?.company_name || '클린뷰티 랩');
-  const [brandUrl, setBrandUrl] = useState(user?.brand_url || 'https://www.innisfree.com');
-  const [dnaText, setDnaText] = useState(
-    user?.brand_dna_summary ||
-      '인위적 조명과 과도한 광고 느낌을 배제하고, 따뜻한 자연광과 깨끗한 피부결·일상 여백의 미를 지향하는 클린 라이프스타일 브랜드 페르소나입니다.'
-  );
+  const [companyName, setCompanyName] = useState(user?.company_name || '');
+  const [brandUrl, setBrandUrl] = useState(user?.brand_url || '');
+  const [dnaText, setDnaText] = useState(user?.brand_dna_summary || '');
   const [saving, setSaving] = useState(false);
   const [extracting, setExtracting] = useState(false);
   const [notice, setNotice] = useState('');

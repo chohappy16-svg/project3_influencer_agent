@@ -86,6 +86,7 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     company_name: Optional[str] = None
+    brand_url: Optional[str] = None
     brand_dna_summary: Optional[str] = None
 
 
