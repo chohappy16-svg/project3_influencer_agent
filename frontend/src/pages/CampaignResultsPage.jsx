@@ -379,7 +379,7 @@ export default function CampaignResultsPage({
           <div className="text-3xl font-extrabold text-brand-navy mt-2">{totalCount}명</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
-          <div className="text-xs font-semibold text-slate-500">정밀 분석 대상</div>
+          <div className="text-xs font-semibold text-slate-500">1차 통과 (정밀 분석)</div>
           <div className="text-3xl font-extrabold text-brand-navy mt-2">{deepAnalyzedCount}명</div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">
