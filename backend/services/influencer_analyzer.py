@@ -508,66 +508,58 @@ def _build_safety_refusal_eval(reason_detail: str = "") -> schemas.InfluencerAIO
     )
 
 
-def _apply_hard_constraints_guardrail(
-    res: schemas.InfluencerAIOutputSchema,
-    campaign_appeal: str,
-) -> schemas.InfluencerAIOutputSchema:
-    """
-    마케터 가이드라인의 자연어 필수조건(Hard Constraints)을 사후 검증하는 방어 가드레일:
-    - '반려동물 있어야 함/필수/보유/키우는' 조건이 있는데 family_pet_exposure가 UNKNOWN/NONE_VISIBLE인 경우
-    - 무조건 APPROVE를 취소하고 REVIEW_NEEDED로 하향 조정 및 위험 충돌 요소 추가
-    """
-    appeal_str = (campaign_appeal or "").lower()
-    pet_tokens = ("반려동물", "반려견", "반려묘", "강아지", "고양이", "펫", "pet")
-    must_tokens = ("있어야", "필수", "키우", "보유", "동반", "함께", "필요", "경험")
-
-    has_pet_requirement = any(p in appeal_str for p in pet_tokens) and any(m in appeal_str for m in must_tokens)
-
-    if has_pet_requirement and res.family_pet_exposure in ("NONE_VISIBLE", "UNKNOWN"):
-        if res.fit_status == "APPROVE":
-            res.fit_status = "REVIEW_NEEDED"
-            res.overall_match_percentage = min(68, res.overall_match_percentage)
-            warning_msg = "캠페인 필수 조건(반려동물 노출/보유)이 피드 내에서 확인되지 않아 '검토 필요'로 안전 하향 조정됨"
-            if warning_msg not in res.expected_collisions:
-                res.expected_collisions.insert(0, warning_msg)
-            if not any("반려동물" in str(b) for b in res.rationale_bullets):
-                res.rationale_bullets.insert(0, warning_msg)
-            res.one_line_verdict = f"{res.one_line_verdict[:50]} (반려동물 확인 요망)"[:85]
-
-    return res
-
-
 async def _run_track2_gpt4o_evaluation(
     profile: Dict[str, Any],
     b64_images: List[str],
     brand_dna: str,
     campaign_appeal: str,
+    preferred_format: str = "MIXED",
+    primary_format: str = "FEED",
 ) -> Tuple[schemas.InfluencerAIOutputSchema, int, int, float, float, float]:
     """
     [2차 정밀 분석 - GPT-4o Structured Output]
     - UNKNOWN(파악 불가) 환각 통제 스키마 적용
-    - 브랜드 DNA + 5대 캠페인 가이드라인 정밀 대조
+    - 브랜드 DNA + 5대 캠페인 가이드라인 + 희망 포맷 정밀 대조
     """
     start_t = time.perf_counter()
     openai_key = (os.getenv("OPENAI_API_KEY") or "").strip()
 
+    if preferred_format == "REELS":
+        format_guide = (
+            "이번 캠페인은 [릴스(REELS) 영상 전용] 캠페인입니다. "
+            "후보자의 주력 포맷이 REELS이면 높은 가산점을 부여하고 적극 긍정 평가하세요. "
+            "반대로 주력 포맷이 FEED(이미지) 위주라면 릴스 제작 역량 확인이나 포맷 조율이 필요함을 expected_collisions에 짚어주세요."
+        )
+    elif preferred_format == "FEED":
+        format_guide = (
+            "이번 캠페인은 [피드(FEED) 이미지 전용] 캠페인입니다. "
+            "후보자의 주력 포맷이 FEED이면 사진 감도와 구도 완성도를 중심으로 유리하게 평가하세요."
+        )
+    else:
+        format_guide = (
+            "이번 캠페인은 [자유/혼합(MIXED)] 캠페인입니다. "
+            "릴스·피드 포맷 구분 없이 콘텐츠 퀄리티와 브랜드 무드 일치도를 중심으로 평가하세요."
+        )
+
     system_prompt = (
         "당신은 B2B 인플루언서 마케팅 의사결정 AI 에이전트입니다.\n"
-        "아래 [브랜드 페르소나 DNA]와 [캠페인 5대 가이드라인]을 기준으로 후보자의 적합도를 정밀 분석하세요.\n\n"
+        "아래 [브랜드 페르소나 DNA], [캠페인 5대 가이드라인], [희망 콘텐츠 포맷]을 기준으로 후보자의 적합도를 정밀 분석하세요.\n\n"
         f"[브랜드 페르소나 DNA]\n{brand_dna}\n\n"
         f"[캠페인 5대 가이드라인]\n{campaign_appeal}\n\n"
+        f"[희망 콘텐츠 포맷]\n{format_guide}\n\n"
         "[절대 원칙 - 환각(Hallucination) 통제 및 언어 강제]\n"
         "- skin_type, family_pet_exposure, communication_authenticity 필드는 제공된 바이오·캡션·이미지에서 "
-        "명확한 근거가 확인된 경우에만 값을 지정하고, 조금이라도 불확실하거나 정보가 없으면 추측하지 말고 반드시 'UNKNOWN'을 반환하세요.\n"
-        "- [마케터 가이드라인 자연어 필수조건 해석 규칙]\n"
-        "  * 캠페인 가이드라인에 '~있어야 함', '~필수', '~보유', '~경험자', '~키우는', '~타입만' 등 자격/보유 조건을 요구하는 문구가 포함된 경우, "
-        "이는 단순 선호가 아닌 '필수 전제조건(Hard Constraint)'입니다.\n"
-        "  * 인플루언서의 피드·바이오에서 해당 필수 조건(예: 반려동물 유무, 특정 피부타입, 자녀 등)이 직접 확인되지 않거나('UNKNOWN', 'NONE_VISIBLE') 불일치하면, "
-        "아무리 톤앤매너와 비주얼이 뛰어나더라도 절대 'APPROVE(적합)'를 부여하지 마세요.\n"
-        "  * 이 경우 반드시 'REVIEW_NEEDED(검토 필요)' 또는 'REJECT(부적합)'로 판정하고, overall_match_percentage를 65점 이하로 감점하며, "
-        "expected_collisions 1순위에 '캠페인 요구 조건(예: 반려동물 있어야 함 등) 피드 내 미확인'을 명확히 명시하세요.\n"
-        "- 5대 가이드라인 중 인플루언서 기존 화풍과 부딪히는 요소는 expected_collisions에 명시하세요.\n"
-        "- 감성/스토리텔링이 뛰어나지만 일부 가이드라인 조율이 필요하면 CREATIVE_EXCEPTION으로 판정하세요.\n"
+        "명확한 근거가 확인된 경우에만 값을 지정하고, 불확실하거나 정보가 없으면 추측하지 말고 'UNKNOWN'을 반환하세요.\n"
+        "- [마케터 가이드라인 해석 원칙: '선호/우대/타깃' vs '절대 필수' 구분]\n"
+        "  * 가이드라인에 '~있으면 좋음', '~없어도 무방', '~우대', '~선호', '~권장' 등 선택적 표현이 포함된 경우, "
+        "이는 가산점 요소일 뿐 피드에 나타나지 않아도 절대 감점하거나 'REVIEW_NEEDED'로 내리지 마세요.\n"
+        "  * '타깃 고객: 20~35세 건조하고 민감한 피부' 같은 문구는 제품 타깃층 설명입니다. "
+        "인플루언서가 프로필에 자신의 피부타입을 적어두지 않아 'UNKNOWN'이더라도 결격 사유로 삼지 마세요.\n"
+        "  * 오직 '~반드시 있어야 함', '~키우는 분만 가능', '~제외'처럼 명확히 참여 자격을 제한하거나 금지한 조건에 "
+        "정면으로 위배·미확인되는 경우에만 'REVIEW_NEEDED' 또는 'REJECT'로 판정하세요.\n"
+        "  * 위와 같은 명확한 결격 사유가 없고 브랜드 DNA 및 콘텐츠 무드/감도가 잘 어울린다면, "
+        "과도하게 보수적으로 판단하지 말고 'APPROVE(적합, 78~95%)' 또는 독창적 감성이 돋보이는 'CREATIVE_EXCEPTION(예외 추천, 72~85%)'을 부여하세요.\n"
+        "- 5대 가이드라인 중 인플루언서 기존 화풍과 조율이 필요한 부분은 expected_collisions에 명시하세요.\n"
         "- [필수] 인플루언서의 프로필, 바이오, 게시물 캡션이 영어·일본어 등 외국어로 작성되어 있더라도, "
         "one_line_verdict, rationale_bullets, expected_collisions, scene_type_kr의 모든 문장은 반드시 자연스러운 한국어(Korean)로만 작성하세요."
     )
@@ -578,6 +570,7 @@ async def _run_track2_gpt4o_evaluation(
             "text": (
                 f"인스타그램 ID: @{profile['instagram_id']}\n"
                 f"이름: {profile['full_name']}\n"
+                f"주력 콘텐츠 포맷: {primary_format}\n"
                 f"팔로워: {profile['followers_count']}명 / 게시물: {profile['posts_count']}개\n"
                 f"프로필 바이오: {profile['bio']}\n"
                 f"최근 게시물 캡션:\n" + ("\n- ".join(profile["captions"]) if profile["captions"] else "(수집된 캡션 없음)")
@@ -641,7 +634,6 @@ async def _run_track2_gpt4o_evaluation(
                 except Exception:
                     pass
 
-            parsed_out = _apply_hard_constraints_guardrail(parsed_out, campaign_appeal)
             return parsed_out, p_tok, c_tok, usd, krw, latency
         except Exception as exc:
             err_lower = str(exc).lower()
@@ -747,7 +739,12 @@ async def _analyze_single_candidate(
         # 1차 통과자 -> 미디어 3장 규격화 후 2차 정밀 분석(GPT-4o)
         b64_images = await _prepare_media_b64(profile)
         t2_res, t2_pt, t2_ct, t2_usd, t2_krw, t2_lat = await _run_track2_gpt4o_evaluation(
-            profile, b64_images, brand_dna, campaign_appeal
+            profile,
+            b64_images,
+            brand_dna,
+            campaign_appeal,
+            preferred_format=preferred_format,
+            primary_format=primary_format,
         )
 
         token_logs.append(
