@@ -375,7 +375,7 @@ export default function CandidateComparePage({
                     type="button"
                     disabled={decidingId === c.id}
                     onClick={() => handleDecision(c.id, isApproved ? 'PENDING' : 'APPROVED')}
-                    title={isApproved ? '클릭 시 승인을 취소하고 대기 상태로 되돌립니다' : '최종 승인'}
+                    title={isApproved ? '클릭 시 선정을 취소하고 대기 상태로 되돌립니다' : '내부 섭외 대상으로 선정 확정'}
                     className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
                       isApproved
                         ? 'bg-emerald-50 text-brand-mint border border-emerald-300 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
@@ -387,7 +387,7 @@ export default function CandidateComparePage({
                     ) : (
                       <Check className="w-3.5 h-3.5" />
                     )}
-                    {isApproved ? '승인 취소' : '최종 승인'}
+                    {isApproved ? '선정 취소' : '선정 확정'}
                   </button>
                 </div>
               );
@@ -399,7 +399,7 @@ export default function CandidateComparePage({
       <div className="bg-white rounded-2xl border border-slate-200/80 px-6 py-4 flex items-center gap-3 text-xs text-slate-500">
         <AlertCircle className="w-4 h-4 text-brand-sky shrink-0" />
         <span>
-          <strong>매칭률만으로 결정하지 마세요.</strong> 콘텐츠 근거와 예상 원고료를 함께 확인한 뒤 적합한 후보를 최종 승인하세요.
+          <strong>매칭률만으로 결정하지 마세요.</strong> 콘텐츠 근거와 예상 원고료를 함께 확인한 뒤 적합한 후보를 선정 확정하세요.
         </span>
       </div>
 

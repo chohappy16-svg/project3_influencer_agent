@@ -157,7 +157,7 @@ export default function App() {
     results: activeCampaign ? `${activeCampaign.title} / 분석 결과` : '분석 결과',
     detail: activeCandidate ? `후보 상세 / @${activeCandidate.instagram_id}` : '후보 상세',
     compare: '후보 2인 비교',
-    approved: '승인 후보 관리',
+    approved: '선정 후보 관리',
     dna: '브랜드 DNA',
     settings: '계정 및 워크스페이스 설정',
   };

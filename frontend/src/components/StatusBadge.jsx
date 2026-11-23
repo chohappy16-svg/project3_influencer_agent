@@ -69,7 +69,7 @@ export function ApprovalStateBadge({ state }) {
   if (state === 'APPROVED') {
     return (
       <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-brand-mint border border-emerald-200 shrink-0 whitespace-nowrap">
-        승인 완료
+        선정 완료
       </span>
     );
   }
