@@ -404,21 +404,6 @@ export default function CampaignResultsPage({
         </div>
       </div>
 
-      {/* Cost Optimization Summary Banner (if just uploaded) */}
-      {costSummary && (
-        <div className="bg-white rounded-2xl border border-sky-200 bg-sky-50/40 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-brand-navy">
-            <Sparkles className="w-4 h-4 text-brand-sky" />
-            <span>
-              효율적 2단계 분석 완료: 1차 선별({costSummary.track1_gemini_calls}명 중 {costSummary.track1_rejected_count}명 제외) ➔ 정밀 분석({costSummary.track2_gpt4o_calls}명)
-            </span>
-          </div>
-          <div className="text-xs font-bold text-brand-sky">
-            소모 비용 {costSummary.total_cost_krw}원 (단일 정밀 분석 대비 {costSummary.cost_saving_percentage}% 절감)
-          </div>
-        </div>
-      )}
-
       {/* 4 KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5">

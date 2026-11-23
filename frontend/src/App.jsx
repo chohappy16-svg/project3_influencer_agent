@@ -103,11 +103,24 @@ export default function App() {
     setView('upload');
   };
 
-  const handleAnalysisComplete = (uploadRes) => {
-    setCampaignResults(uploadRes.results || []);
-    setLastCostSummary(uploadRes.cost_summary || null);
-    fetchCampaigns();
+  const handleAnalysisComplete = async (uploadRes) => {
     setView('results');
+    setLoadingResults(true);
+    setLastCostSummary(uploadRes?.cost_summary || null);
+    const targetCampaignId = uploadRes?.campaign_id || activeCampaign?.id;
+    try {
+      if (targetCampaignId) {
+        const fullRows = await campaignsApi.getResults(targetCampaignId);
+        setCampaignResults(fullRows);
+      } else {
+        setCampaignResults(uploadRes?.results || []);
+      }
+    } catch {
+      setCampaignResults(uploadRes?.results || []);
+    } finally {
+      setLoadingResults(false);
+    }
+    fetchCampaigns();
   };
 
   const handleDecisionUpdated = (resultId, newApprovalState) => {
